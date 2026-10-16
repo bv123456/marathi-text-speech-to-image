@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="mr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>चित्रसृष्टी (ChitraSrushti) - Marathi Text & Speech to Image AI</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎨</text></svg>">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            saffron: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              800: '#9a3412',
+              900: '#7c2d12',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-ambient min-h-screen text-slate-100 flex flex-col selection:bg-orange-600 selection:text-white">
+
+  <!-- ================= TOP NAVIGATION ================= -->
+  <header class="sticky top-0 z-40 w-full backdrop-blur-md bg-slate-950/80 border-b border-orange-500/20 px-4 lg:px-8 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30 text-white font-bold text-xl">
+          🎨
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl md:text-2xl font-extrabold brand-font tracking-wide bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 bg-clip-text text-transparent" data-i18n="appTitle">
+              चित्रसृष्टी
+            </h1>
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">
+              AI Powered
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block" data-i18n="appSubtitle">
+            मराठी आवाज आणि मजकुराचे अप्रतिम AI चित्रात रूपांतर
+          </p>
+        </div>
+      </div>
+
+      <!-- Nav Actions -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Quick Keyboard Toggle -->
+        <button id="toggleKeyboardBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-medium border border-slate-700 transition" title="मराठी व्हर्च्युअल कीबोर्ड उघडा">
+          <i data-lucide="keyboard" class="w-4 h-4 text-orange-400"></i>
+          <span class="hidden md:inline" data-i18n="navKeyboard">मराठी कीबोर्ड</span>
+        </button>
+
+        <!-- Presets Drawer Button -->
+        <button id="navPresetsBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-medium border border-slate-700 transition">
+          <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+          <span class="hidden md:inline" data-i18n="navPresets">प्रॉम्प्ट्स</span>
+        </button>
+
+        <!-- Gallery Scroll Button -->
+        <button id="navGalleryBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-medium border border-slate-700 transition">
+          <i data-lucide="images" class="w-4 h-4 text-rose-400"></i>
+          <span class="hidden md:inline" data-i18n="navGallery">गॅलरी</span>
+        </button>
+
+        <!-- Help / Info Modal Button -->
+        <button id="helpModalBtn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm border border-slate-700 transition" title="मदत आणि माहिती">
+          <i data-lucide="help-circle" class="w-4 h-4"></i>
+        </button>
+
+        <!-- Language Switcher -->
+        <button id="langToggleBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-orange-600/30 transition">
+          <i data-lucide="languages" class="w-4 h-4"></i>
+          <span>English</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN APP CONTAINER ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+
+    <!-- HERO INTRO BANNER -->
+    <div class="glass-card rounded-2xl p-6 sm:p-8 relative overflow-hidden border border-orange-500/20">
+      <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none text-[180px]">
+        🦚
+      </div>
+      <div class="relative z-10 max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-xs font-semibold mb-3">
+          <span>✨</span>
+          <span>मराठी भाषा + जनरेटिव्ह AI इमेज मॉडेल</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight brand-font mb-2" data-i18n="inputHeader">
+          तुमची कल्पना सांगा किंवा लिहा
+        </h2>
+        <p class="text-slate-300 text-sm sm:text-base leading-relaxed" data-i18n="inputSubheader">
+          मायक्रोफोनवर मराठीत बोला किंवा टाईप करा. आमची प्रगत प्रणाली मराठी भाषेचे अचूक विश्लेषण करून त्यातून अप्रतिम कलाकृती तयार करते!
+        </p>
+
+        <!-- Quick Feature Badges -->
+        <div class="flex flex-wrap items-center gap-2 mt-4 text-xs text-slate-300">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-800/80 border border-slate-700">
+            <i data-lucide="mic" class="w-3.5 h-3.5 text-red-400"></i> मराठी व्हॉइस इनपुट (mr-IN)
+          </span>
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-800/80 border border-slate-700">
+            <i data-lucide="type" class="w-3.5 h-3.5 text-amber-400"></i> इंग्लिश-ते-मराठी फोनेटिक टायपिंग
+          </span>
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-800/80 border border-slate-700">
+            <i data-lucide="palette" class="w-3.5 h-3.5 text-emerald-400"></i> वॉरली, रविवर्मा व वास्तववादी कलाशैली
+          </span>
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-800/80 border border-slate-700">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i> FLUX.1 AI मॉडेल (विनामूल्य व जलद)
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN TWO-COLUMN WORKBENCH -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- LEFT COLUMN: INPUT CONTROLS (7 COLS) -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- WORKSPACE CARD -->
+        <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-5">
+
+          <!-- VOICE / SPEECH RECOGNITION HERO BAR -->
+          <div class="bg-slate-900/90 rounded-xl p-4 border border-orange-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <button id="micBtn" type="button" class="relative group w-14 h-14 rounded-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white flex items-center justify-center shadow-lg shadow-red-600/30 transition transform active:scale-95 shrink-0" title="मराठीत बोलण्यासाठी येथे क्लिक करा">
+                <i data-lucide="mic" id="micIcon" class="w-6 h-6"></i>
+              </button>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 id="micStatusText" class="font-bold text-white text-sm sm:text-base" data-i18n="micButtonStart">
+                    मराठीत बोला (माईक)
+                  </h3>
+                  <div id="soundWave" class="sound-wave hidden">
+                    <span class="sound-wave-bar"></span>
+                    <span class="sound-wave-bar"></span>
+                    <span class="sound-wave-bar"></span>
+                    <span class="sound-wave-bar"></span>
+                    <span class="sound-wave-bar"></span>
+                  </div>
+                </div>
+                <p id="micSubtext" class="text-xs text-slate-400">
+                  माईकवर क्लिक करून मराठीत बोला (उदा. "पावसात नाचणारा मोर")
+                </p>
+              </div>
+            </div>
+
+            <!-- Quick Audio Simulation / Test Dropdown -->
+            <div class="w-full sm:w-auto flex items-center gap-2">
+              <button id="quickVoiceTestBtn" type="button" class="w-full sm:w-auto text-xs px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-orange-300 border border-orange-500/30 flex items-center justify-center gap-1.5 transition" title="मायक्रोफोन नसल्यास नमुना आवाज तपासा">
+                <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                <span>नमुना आवाज (Sample)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Audio Sample Simulator Modal / Drawer (Collapsible) -->
+          <div id="sampleVoiceDrawer" class="hidden bg-slate-950/90 rounded-xl p-4 border border-amber-500/30 text-xs space-y-2">
+            <div class="flex items-center justify-between text-amber-300 font-semibold">
+              <span data-i18n="audioSimTitle">माईक काम करत नाहीये? येथे नमुना ऑडिओ निवडून तपासा:</span>
+              <button id="closeSampleDrawer" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <button type="button" class="sample-voice-btn p-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-orange-500 text-left transition flex items-center justify-between" data-text="पावसात पिसारा फुलवून नाचणारा देखणा मोर">
+                <span>🦚 पावसात नाचणारा मोर</span>
+                <i data-lucide="play" class="w-3.5 h-3.5 text-orange-400"></i>
+              </button>
+              <button type="button" class="sample-voice-btn p-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-orange-500 text-left transition flex items-center justify-between" data-text="भव्य सह्याद्रीच्या कड्यावर उभा असलेला ऐतिहासिक रायगड किल्ला">
+                <span>🚩 किल्ले रायगड सह्याद्री</span>
+                <i data-lucide="play" class="w-3.5 h-3.5 text-orange-400"></i>
+              </button>
+              <button type="button" class="sample-voice-btn p-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-orange-500 text-left transition flex items-center justify-between" data-text="दिवाळीच्या रात्री अंगणात लावलेल्या पणत्या आणि सुरेख रांगोळी">
+                <span>🪔 दिवाळीच्या पणत्या व रांगोळी</span>
+                <i data-lucide="play" class="w-3.5 h-3.5 text-orange-400"></i>
+              </button>
+              <button type="button" class="sample-voice-btn p-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-orange-500 text-left transition flex items-center justify-between" data-text="पारंपारिक वॉरली लोककला, पांढऱ्या तांदळाच्या पिठाची आदिवासी नृत्य चित्रे">
+                <span>🎨 वॉरली आदिवासी लोककला</span>
+                <i data-lucide="play" class="w-3.5 h-3.5 text-orange-400"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- TEXT INPUT AREA -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label for="promptInput" class="text-xs sm:text-sm font-semibold text-slate-200 flex items-center gap-1.5">
+                <i data-lucide="file-text" class="w-4 h-4 text-orange-400"></i>
+                <span>मराठी मजकूर (Marathi Text):</span>
+              </label>
+
+              <!-- Transliteration Switch -->
+              <label class="inline-flex items-center gap-2 cursor-pointer text-xs text-slate-300 hover:text-white transition">
+                <input type="checkbox" id="translitToggle" class="sr-only peer" checked>
+                <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-orange-600 relative"></div>
+                <span class="text-[11px] font-medium" data-i18n="translitToggle">फोनेटिक टायपिंग (sundar -> सुंदर)</span>
+              </label>
+            </div>
+
+            <!-- Textarea Box -->
+            <div class="relative rounded-xl overflow-hidden border border-slate-700 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20 bg-slate-900/90 transition">
+              <textarea 
+                id="promptInput" 
+                rows="4" 
+                class="w-full p-4 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none resize-y text-base sm:text-lg leading-relaxed font-medium"
+                placeholder="उदा: पावसात पिसारा फुलवून नाचणारा मोर, सह्याद्रीचे भव्य किल्ले, किंवा दिवाळीच्या दिव्यांची आरास..."
+                data-i18n="placeholder"
+              ></textarea>
+
+              <!-- Bottom Bar inside Textarea -->
+              <div class="flex items-center justify-between px-3 py-2 bg-slate-950/60 border-t border-slate-800 text-xs text-slate-400">
+                <div class="flex items-center gap-2">
+                  <!-- Listen TTS Button -->
+                  <button type="button" id="listenTTSBtn" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center gap-1 transition" title="हा मजकूर मराठी आवाजात ऐका">
+                    <i data-lucide="volume-2" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span data-i18n="listenTTS">उच्चार ऐका</span>
+                  </button>
+
+                  <!-- Clear Button -->
+                  <button type="button" id="clearTextBtn" class="px-2 py-1 rounded hover:bg-slate-800 text-slate-400 hover:text-rose-400 flex items-center gap-1 transition" title="मजकूर पुसा">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    <span data-i18n="clearText">पुसा</span>
+                  </button>
+
+                  <!-- Copy Button -->
+                  <button type="button" id="copyTextBtn" class="px-2 py-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white flex items-center gap-1 transition" title="मजकूर कॉपी करा">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    <span data-i18n="copyText">कॉपी</span>
+                  </button>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <!-- Surprise Me Button -->
+                  <button type="button" id="surpriseBtn" class="px-2.5 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 transition font-medium">
+                    <i data-lucide="dices" class="w-3.5 h-3.5"></i>
+                    <span data-i18n="surpriseBtn">नवीन कल्पना</span>
+                  </button>
+
+                  <!-- Char Counter -->
+                  <span id="charCount" class="text-slate-500">0 अक्षरे</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIVE AI ENGLISH PROMPT PREVIEW & EDITOR -->
+          <div id="livePromptSection" class="p-3.5 rounded-xl bg-slate-950/70 border border-orange-500/30 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                <label for="liveEnglishPrompt" class="text-xs font-semibold text-amber-300">
+                  AI प्रॉम्प्ट पूर्वावलोकन (Live English AI Prompt):
+                </label>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="transStatusIndicator" class="text-[11px] text-slate-400 flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span> तयार
+                </span>
+                <button type="button" id="refreshTranslationBtn" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-orange-400 hover:text-orange-300 transition text-[11px] flex items-center gap-1" title="भाषांतर पुन्हा तपासा">
+                  <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                  <span>रिफ्रेश</span>
+                </button>
+              </div>
+            </div>
+            <textarea 
+              id="liveEnglishPrompt" 
+              rows="2" 
+              class="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 text-slate-200 text-xs font-mono resize-y leading-relaxed"
+              placeholder="मराठीत बोलल्यानंतर किंवा लिहिल्यानंतर येथे AI साठी अचूक इंग्रजी भाषांतर दिसेल..."
+            ></textarea>
+            <div class="text-[10px] text-slate-400 flex items-center justify-between">
+              <span>💡 तुम्ही हा इंग्रजी प्रॉम्प्ट आवश्यकतेनुसार बदलू (Edit) शकता.</span>
+              <span id="promptSyncNote" class="text-amber-400/80">आपोआप सिंक्रोनाइझ होतो</span>
+            </div>
+          </div>
+
+          <!-- VIRTUAL KEYBOARD CONTAINER (Collapsible) -->
+          <div id="virtualKeyboardContainer" class="hidden transition-all duration-300">
+            <!-- Injected by marathi-keyboard.js -->
+          </div>
+
+          <!-- ART STYLE SELECTOR -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs sm:text-sm font-semibold text-slate-200 flex items-center gap-1.5">
+                <i data-lucide="palette" class="w-4 h-4 text-amber-400"></i>
+                <span data-i18n="styleSectionTitle">चित्राची कलाशैली निवडा (Art Style):</span>
+              </label>
+              <span class="text-xs text-orange-400 font-medium" id="currentStyleLabel">वास्तववादी छायाचित्र</span>
+            </div>
+
+            <!-- Style Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5" id="styleOptionsGrid">
+              
+              <!-- 1. Photorealistic -->
+              <label class="cursor-pointer">
+                <input type="radio" name="artStyle" value="photorealistic" class="sr-only style-option-input" checked>
+                <div class="style-card p-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 transition flex items-center gap-2.5">
+                  <span class="text-xl">📸</span>
+                  <div class="truncate">
+                    <div class="text-xs font-bold text-white truncate" data-i18n="stylePhotorealistic">वास्तववादी छायाचित्र</div>
+                    <div class="text-[10px] text-slate-400">Ultra-Realistic 8K</div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- 2. Warli Folk Art -->
+              <label class="cursor-pointer">
+                <input type="radio" name="artStyle" value="warli" class="sr-only style-option-input">
+                <div class="style-card p-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 transition flex items-center gap-2.5">
+                  <span class="text-xl">🎨</span>
+                  <div class="truncate">
+                    <div class="text-xs font-bold text-white truncate" data-i18n="styleWarli">वॉरली लोककला</div>
+                    <div class="text-[10px] text-slate-400">Warli Folk Art</div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- 3. Raja Ravi Varma -->
+              <label class="cursor-pointer">
+                <input type="radio" name="artStyle" value="rajaravivarma" class="sr-only style-option-input">
+                <div class="style-card p-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 transition flex items-center gap-2.5">
+                  <span class="text-xl">🖌️</span>
+                  <div class="truncate">
+                    <div class="text-xs font-bold text-white truncate" data-i18n="styleRajaRaviVarma">राजा रविवर्मा</div>
+                    <div class="text-[10px] text-slate-400">Classic Oil Painting</div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- 4. Cinematic -->
+              <label class="cursor-pointer">
+                <input type="radio" name="artStyle" value="cinematic" class="sr-only style-option-input">
+                <div class="style-card p-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 transition flex items-center gap-2.5">
+                  <span class="text-xl">🎬</span>
+                  <div class="truncate">
+                    <div class="text-xs font-bold text-white truncate" data-i18n="styleCinematic">सिनेमॅटिक भव्य</div>
+                    <div class="text-[10px] text-slate-400">Cinematic Lighting</div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- 5. Watercolor -->
+              <label class="cursor-pointer">
+                <input type="radio" name="artStyle" value="watercolor" class="sr-only style-option-input">
+                <div class="style-card p-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 transition flex items-center gap-2.5">
+                  <span class="text-xl">🌊</span>
+                  <div class="truncate">
+                    <div class="text-xs font-bold text-white truncate" data-i18n="styleWatercolor">जलरंग चित्र</div>
+                    <div class="text-[10px] text-slate-400">Watercolor Paint</div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- 6. 3D Digital -->
+              <label class="cursor-pointer">
+                <input type="radio" name="artStyle" value="digital3d" class="sr-only style-option-input">
+                <div class="style-card p-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 transition flex items-center gap-2.5">
+                  <span class="text-xl">✨</span>
+                  <div class="truncate">
+                    <div class="text-xs font-bold text-white truncate" data-i18n="styleDigital3d">३डी डिजिटल</div>
+                    <div class="text-[10px] text-slate-400">Octane / 3D Render</div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- 7. Anime -->
+              <label class="cursor-pointer">
+                <input type="radio" name="artStyle" value="anime" class="sr-only style-option-input">
+                <div class="style-card p-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 transition flex items-center gap-2.5">
+                  <span class="text-xl">🌸</span>
+                  <div class="truncate">
+                    <div class="text-xs font-bold text-white truncate" data-i18n="styleAnime">ॲनिमे / गिबली</div>
+                    <div class="text-[10px] text-slate-400">Anime Aesthetic</div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- 8. Peshwai Heritage -->
+              <label class="cursor-pointer">
+                <input type="radio" name="artStyle" value="peshwai" class="sr-only style-option-input">
+                <div class="style-card p-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 transition flex items-center gap-2.5">
+                  <span class="text-xl">🏛️</span>
+                  <div class="truncate">
+                    <div class="text-xs font-bold text-white truncate" data-i18n="stylePeshwai">पेशवेकालीन वैभव</div>
+                    <div class="text-[10px] text-slate-400">Royal Maratha Era</div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- 9. Sketch -->
+              <label class="cursor-pointer">
+                <input type="radio" name="artStyle" value="sketch" class="sr-only style-option-input">
+                <div class="style-card p-3 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 transition flex items-center gap-2.5">
+                  <span class="text-xl">✏️</span>
+                  <div class="truncate">
+                    <div class="text-xs font-bold text-white truncate" data-i18n="styleSketch">पेन्सिल स्केच</div>
+                    <div class="text-[10px] text-slate-400">Charcoal Drawing</div>
+                  </div>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- ADVANCED OPTIONS ACCORDION -->
+          <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/40">
+            <button type="button" id="toggleAdvancedBtn" class="w-full px-4 py-3 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white flex items-center justify-between transition">
+              <span class="flex items-center gap-2">
+                <i data-lucide="sliders" class="w-4 h-4 text-orange-400"></i>
+                <span data-i18n="advancedTitle">प्रगत पर्याय (Aspect Ratio, Model & Seed)</span>
+              </span>
+              <i data-lucide="chevron-down" id="advancedIcon" class="w-4 h-4 transition-transform duration-200"></i>
+            </button>
+
+            <div id="advancedPanel" class="hidden p-4 border-t border-slate-800 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                
+                <!-- Aspect Ratio -->
+                <div>
+                  <label class="block font-medium text-slate-300 mb-1.5" data-i18n="aspectRatio">चित्राचा आकार (Ratio):</label>
+                  <select id="aspectRatioSelect" class="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 focus:outline-none focus:border-orange-500">
+                    <option value="1:1" selected data-i18n="ratioSquare">1:1 चौरस (Square - 768x768)</option>
+                    <option value="16:9" data-i18n="ratioLandscape">16:9 आडवे (Landscape - 1024x576)</option>
+                    <option value="9:16" data-i18n="ratioPortrait">9:16 उभे (Portrait - 576x1024)</option>
+                    <option value="4:3" data-i18n="ratioClassic">4:3 क्लासिक (800x600)</option>
+                  </select>
+                </div>
+
+                <!-- AI Engine Model -->
+                <div>
+                  <label class="block font-medium text-slate-300 mb-1.5" data-i18n="modelLabel">AI डिफ्यूझर मॉडेल:</label>
+                  <select id="modelSelect" class="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 focus:outline-none focus:border-orange-500 font-semibold text-xs">
+                    <option value="sdxl_diffusers" selected>🚀 SDXL Diffusers + Dual CLIP (जलद व उच्च दर्जा)</option>
+                    <option value="hf_sdxl">🔑 Stability AI SDXL Base 1.0 (HF Token सह)</option>
+                    <option value="flux">⚡ FLUX.1 Turbo</option>
+                  </select>
+                </div>
+
+                <!-- Seed Control -->
+                <div>
+                  <label class="block font-medium text-slate-300 mb-1.5" data-i18n="seedLabel">सीड (Seed):</label>
+                  <div class="flex items-center gap-1.5">
+                    <input type="number" id="seedInput" placeholder="यादृच्छिक (Random)" class="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 focus:outline-none focus:border-orange-500 text-xs">
+                    <button type="button" id="randomizeSeedBtn" class="p-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400" title="नवीन यादृच्छिक सीड">
+                      <i data-lucide="shuffle" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- SDXL & CLIP ALGORITHM CONTROLS -->
+              <div class="border-t border-slate-800 pt-3 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                    <span>SDXL Diffuser व CLIP अल्गोरिदम सेटिंग्ज:</span>
+                  </span>
+                  <span class="text-[10px] text-slate-400 font-mono">Dual CLIP ViT-L + bigG</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <!-- CLIP Guidance Scale (CFG) -->
+                  <div class="space-y-1">
+                    <div class="flex justify-between text-slate-300">
+                      <span>CLIP Guidance (CFG Scale):</span>
+                      <span id="cfgValBadge" class="font-bold text-amber-400 font-mono">7.5</span>
+                    </div>
+                    <input type="range" id="cfgSlider" min="1.0" max="15.0" step="0.5" value="7.5" class="w-full accent-orange-500 cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-slate-500">
+                      <span>1.0 (सैल)</span>
+                      <span>7.5 (इष्टतम)</span>
+                      <span>15.0 (कडक)</span>
+                    </div>
+                  </div>
+
+                  <!-- Denoising Steps -->
+                  <div class="space-y-1">
+                    <div class="flex justify-between text-slate-300">
+                      <span>Denoising Steps:</span>
+                      <span id="stepsValBadge" class="font-bold text-amber-400 font-mono">30</span>
+                    </div>
+                    <input type="range" id="stepsSlider" min="15" max="50" step="5" value="30" class="w-full accent-orange-500 cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-slate-500">
+                      <span>15 (वेगवान)</span>
+                      <span>30 (संतुलित)</span>
+                      <span>50 (बारीक)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CLIP Negative Prompt -->
+                <div class="space-y-1">
+                  <label class="block text-slate-300 text-[11px] font-medium">CLIP नकारात्मक प्रॉम्प्ट (Negative Guidance Tokens):</label>
+                  <input type="text" id="negativePromptInput" value="blurry, bad anatomy, deformed limbs, disfigured, low resolution, bad quality, watermark, signature" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 text-xs font-mono focus:outline-none focus:border-amber-500">
+                </div>
+
+                <!-- Hugging Face Token (Optional) -->
+                <div id="hfTokenBox" class="hidden space-y-1 p-2.5 rounded-lg bg-slate-900/90 border border-amber-500/20">
+                  <label class="block text-amber-300 text-[11px] font-medium flex items-center justify-between">
+                    <span>Hugging Face API Token (ऐच्छिक / Optional):</span>
+                    <a href="https://huggingface.co/settings/tokens" target="_blank" class="text-orange-400 underline text-[10px]">टोकन मिळवा ↗</a>
+                  </label>
+                  <input type="password" id="hfTokenInput" placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxx" class="w-full p-2 rounded bg-slate-950 border border-slate-700 text-slate-200 text-xs font-mono focus:border-amber-500">
+                  <p class="text-[10px] text-slate-400">हा टोकन फक्त तुमच्या स्थानिक ब्राउझरमध्ये राहतो.</p>
+                </div>
+              </div>
+
+              <!-- Enhance Prompt Checkbox -->
+              <div class="pt-1 flex items-center justify-between text-xs text-slate-300">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" id="enhancePromptToggle" class="rounded bg-slate-800 border-slate-700 text-orange-600 focus:ring-orange-500" checked>
+                  <span>CLIP टोकन ऑप्टिमायझर (Auto-optimize Dual CLIP cross-attention)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- GENERATE BUTTON & STATUS -->
+          <div class="pt-2 space-y-2">
+            <button 
+              type="button" 
+              id="generateBtn" 
+              class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-rose-600 hover:from-orange-500 hover:via-amber-500 hover:to-rose-500 text-white font-extrabold text-base sm:text-lg shadow-xl shadow-orange-600/30 flex items-center justify-center gap-3 transition transform active:scale-[0.99] cursor-pointer"
+            >
+              <i data-lucide="wand-2" id="generateIcon" class="w-5 h-5"></i>
+              <span id="generateBtnText" data-i18n="generateBtn">🎨 चित्र तयार करा (Generate Image)</span>
+            </button>
+            <div class="text-center text-[11px] text-slate-400" data-i18n="pressEnterHint">
+              टीप: कीबोर्डवर Ctrl + Enter दाबूनही चित्र तयार करू शकता
+            </div>
+          </div>
+
+        </div>
+
+        <!-- PRESET PROMPTS SECTION (ACCORDION / DRAWER) -->
+        <div id="presetsSection" class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">📚</span>
+              <h3 class="font-bold text-white text-base" data-i18n="presetsTitle">लोकप्रिय मराठी प्रॉम्प्ट्स (Curated Prompts)</h3>
+            </div>
+            <span class="text-xs text-slate-400">एका क्लिकवर वापरण्यासाठी निवडा</span>
+          </div>
+
+          <!-- Category Tabs -->
+          <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs custom-scrollbar" id="presetCategoryTabs">
+            <button type="button" class="preset-tab active px-3 py-1.5 rounded-lg bg-orange-600 text-white font-semibold shrink-0" data-cat="nature">🦚 निसर्ग व प्राणी</button>
+            <button type="button" class="preset-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 shrink-0" data-cat="history">🚩 इतिहास व किल्ले</button>
+            <button type="button" class="preset-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 shrink-0" data-cat="festivals">🪔 सण व उत्सव</button>
+            <button type="button" class="preset-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 shrink-0" data-cat="rural">🌾 ग्रामीण जीवन</button>
+            <button type="button" class="preset-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 shrink-0" data-cat="art">🎨 वॉरली व कला</button>
+            <button type="button" class="preset-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 shrink-0" data-cat="fantasy">🚀 फँटसी व आधुनिक</button>
+          </div>
+
+          <!-- Preset Cards Container -->
+          <div id="presetCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+            <!-- Injected by app.js from marathi-prompts.js -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: RESULTS, PREVIEWS & INSPECTOR (5 COLS) -->
+      <div class="lg:col-span-5 space-y-6">
+
+        <!-- GENERATION PREVIEW & RESULT CARD -->
+        <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white text-base flex items-center gap-2">
+              <i data-lucide="image" class="w-5 h-5 text-orange-400"></i>
+              <span data-i18n="resultTitle">तयार झालेले चित्र (Artwork)</span>
+            </h3>
+            <span id="resultBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              तयार झाले
+            </span>
+          </div>
+
+          <!-- Image Display Area -->
+          <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-950/80 border border-slate-800 flex items-center justify-center group shadow-inner" id="imageDisplayContainer">
+            
+            <!-- Default Placeholder State -->
+            <div id="emptyState" class="text-center p-6 space-y-3">
+              <div class="w-16 h-16 mx-auto rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-3xl shadow-lg">
+                🖼️
+              </div>
+              <div>
+                <p class="font-semibold text-slate-300 text-sm">येथे तुमचे AI चित्र दिसेल</p>
+                <p class="text-xs text-slate-500 mt-1">डावीकडे मराठीत बोला किंवा लिहा आणि 'चित्र तयार करा' वर क्लिक करा</p>
+              </div>
+            </div>
+
+            <!-- Loading Spinner & Progress State -->
+            <div id="loadingState" class="hidden absolute inset-0 z-20 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center space-y-4">
+              <div class="relative">
+                <div class="w-16 h-16 rounded-full border-4 border-orange-500/20 border-t-orange-500 animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-xl">
+                  🎨
+                </div>
+              </div>
+              <div class="space-y-1.5 max-w-xs">
+                <h4 id="loadingStepTitle" class="font-bold text-white text-sm" data-i18n="statusGenerating">
+                  AI द्वारे कलाकृती साकारत आहे...
+                </h4>
+                <p id="loadingStepDetail" class="text-xs text-orange-300/80">
+                  मराठी शब्दांचे विश्लेषक भाषांतर आणि उच्च दर्जाची प्रतिमा निर्मिती सुरू आहे
+                </p>
+              </div>
+
+              <!-- Animated progress bar -->
+              <div class="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-orange-500 to-rose-500 w-full shimmer-loading"></div>
+              </div>
+            </div>
+
+            <!-- Active Generated Image -->
+            <img id="generatedImage" src="" alt="AI Generated Marathi Artwork" class="hidden w-full h-full object-contain cursor-pointer transition transform duration-300 hover:scale-[1.02]">
+
+            <!-- Overlay Action Buttons (Hover) -->
+            <div id="imageHoverActions" class="hidden absolute bottom-3 right-3 z-10 flex items-center gap-2">
+              <button type="button" id="lightboxBtn" class="p-2.5 rounded-lg bg-slate-900/90 hover:bg-orange-600 text-white border border-slate-700 shadow-xl backdrop-blur-md transition" title="पूर्ण स्क्रीनवर पहा (Fullscreen)">
+                <i data-lucide="maximize-2" class="w-4 h-4"></i>
+              </button>
+              <button type="button" id="downloadBtn" class="px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs shadow-xl flex items-center gap-1.5 transition" title="डाउनलोड करा">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span data-i18n="downloadHd">डाउनलोड</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Image Meta & Actions Bar -->
+          <div id="imageMetaBar" class="hidden space-y-3 pt-2">
+            <!-- Action Buttons Row -->
+            <div class="flex items-center gap-2">
+              <button type="button" id="quickDownloadBtn" class="flex-1 py-2.5 px-3 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-orange-600/20 transition">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span data-i18n="downloadHd">डाउनलोड करा (HD)</span>
+              </button>
+              <button type="button" id="regenerateBtn" class="py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition" title="नवीन यादृच्छिक सीडसह पुन्हा बनवा">
+                <i data-lucide="refresh-cw" class="w-4 h-4 text-amber-400"></i>
+                <span data-i18n="regenerate">पुन्हा बनवा</span>
+              </button>
+            </div>
+
+            <!-- Metadata Badges -->
+            <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
+              <span id="badgeStyle" class="px-2 py-0.5 rounded bg-slate-800 text-orange-300 border border-slate-700">📸 वास्तववादी</span>
+              <span id="badgeRatio" class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">768x768</span>
+              <span id="badgeSeed" class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">Seed: 42</span>
+              <span id="badgeModel" class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">Flux</span>
+            </div>
+          </div>
+
+          <!-- BILINGUAL PROMPT INSPECTOR -->
+          <div id="promptInspector" class="hidden space-y-3 border-t border-slate-800 pt-4 text-xs">
+            <!-- Marathi Original -->
+            <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-1">
+              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold">
+                <span data-i18n="originalMarathiPrompt">मूळ मराठी प्रॉम्प्ट:</span>
+                <button type="button" id="inspectorTTSBtn" class="text-orange-400 hover:text-orange-300 flex items-center gap-1">
+                  <i data-lucide="volume-2" class="w-3 h-3"></i> ऐका
+                </button>
+              </div>
+              <p id="inspectorMarathiPrompt" class="text-slate-200 font-medium"></p>
+            </div>
+
+            <!-- English Translated & Enhanced -->
+            <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-1">
+              <div class="flex items-center justify-between text-slate-400 text-[11px] font-semibold">
+                <span data-i18n="translatedPrompt">AI साठी वापरलेला प्रॉम्प्ट:</span>
+                <button type="button" id="copyEnhancedPromptBtn" class="text-amber-400 hover:text-amber-300 flex items-center gap-1" title="प्रॉम्प्ट कॉपी करा">
+                  <i data-lucide="copy" class="w-3 h-3"></i> कॉपी
+                </button>
+              </div>
+              <p id="inspectorEnglishPrompt" class="text-slate-300 italic font-mono text-[11px] break-words"></p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RECENT ACTIVITY MINI STATS -->
+        <div class="glass-card rounded-2xl p-4 flex items-center justify-between text-xs text-slate-400 border border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>AI सर्व्हर: ऑनलाईन व सक्रिय</span>
+          </div>
+          <div id="totalGenStat" class="font-medium text-slate-300">
+            तयार चित्रे: ०
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= FULL GALLERY SECTION ================= -->
+    <section id="gallerySection" class="glass-card rounded-2xl p-6 sm:p-8 space-y-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🖼️</span>
+            <h3 class="text-xl sm:text-2xl font-bold text-white brand-font" data-i18n="galleryTitle">
+              मागील चित्रांचा संग्रह (गॅलरी)
+            </h3>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">
+            तुम्ही तयार केलेली सर्व चित्रे तुमच्या ब्राउझरमध्ये व संगणकावर सुरक्षित साठवली जातात.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" id="clearGalleryBtn" class="text-xs px-3 py-2 rounded-lg bg-slate-800 hover:bg-rose-900/50 text-slate-400 hover:text-rose-300 border border-slate-700 transition flex items-center gap-1.5">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span data-i18n="clearHistory">सर्व चित्रे पुसा</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Gallery Grid -->
+      <div id="galleryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <!-- Injected dynamically by app.js -->
+      </div>
+
+      <!-- Empty Gallery Placeholder -->
+      <div id="galleryEmptyState" class="text-center py-12 text-slate-500 space-y-2">
+        <div class="text-4xl">🎨</div>
+        <p class="text-sm" data-i18n="galleryEmpty">अजून कोणतीही चित्रे तयार केलेली नाहीत. वरील फॉर्म भरून तुमचे पहिले चित्र बनवा!</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= LIGHTBOX MODAL ================= -->
+  <div id="lightboxModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center">
+      
+      <!-- Close Button -->
+      <button id="closeLightboxBtn" class="absolute -top-12 right-0 p-2 text-slate-300 hover:text-white bg-slate-800/80 rounded-full border border-slate-700 transition">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+
+      <!-- Lightbox Image -->
+      <div class="overflow-hidden rounded-xl border border-slate-700/80 shadow-2xl max-h-[75vh]">
+        <img id="lightboxImage" src="" alt="Full view" class="object-contain max-h-[75vh] w-auto">
+      </div>
+
+      <!-- Lightbox Bottom Details -->
+      <div class="mt-4 w-full bg-slate-900/90 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+        <div class="max-w-2xl space-y-1">
+          <p id="lightboxMarathiText" class="font-semibold text-white text-sm"></p>
+          <p id="lightboxEnglishText" class="text-slate-400 italic font-mono text-[11px]"></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <a id="lightboxDownloadLink" href="#" download class="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-bold flex items-center gap-1.5 transition shadow">
+            <i data-lucide="download" class="w-4 h-4"></i> डाउनलोड करा
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= HELP & INFO MODAL ================= -->
+  <div id="helpModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-orange-500/30 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl text-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">ℹ️</span>
+          <h3 class="font-bold text-white text-lg">चित्रसृष्टी वापरण्याविषयी मदत</h3>
+        </div>
+        <button id="closeHelpBtn" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs sm:text-sm leading-relaxed text-slate-300">
+        <div>
+          <h4 class="font-bold text-orange-400 mb-1">🎙️ मराठी व्हॉइस इनपुट (आवाज):</h4>
+          <p>लाल माईक बटनावर क्लिक करा आणि मराठीत बोला. तुमचा ब्राऊझर (Chrome किंवा Edge) 'mr-IN' प्रणालीद्वारे तुमचा आवाज ऐकून देवनागरी मजकुरात रूपांतरित करतो.</p>
+        </div>
+        <div>
+          <h4 class="font-bold text-amber-400 mb-1">✍️ मराठी टायपिंग पर्याय:</h4>
+          <p><strong>१. फोनेटिक टायपिंग:</strong> इंग्रजीत 'mor' टाईप करून स्पेस दाबा, ते आपोआप 'मोर' होईल!<br>
+          <strong>२. व्हर्च्युअल कीबोर्ड:</strong> वरील कीबोर्ड बटनावर क्लिक करून सर्व मराठी स्वर व व्यंजने वापरू शकता.</p>
+        </div>
+        <div>
+          <h4 class="font-bold text-emerald-400 mb-1">🎨 प्रगत AI इमेज निर्मिती:</h4>
+          <p>तुमच्या मराठी वर्णनाचे आपोआप अत्याधुनिक इंग्रजी प्रॉम्प्टमध्ये विश्लेषण होते आणि FLUX.1 / SDXL मॉडेलद्वारे उच्च गुणवत्तेचे चित्र तयार केले जाते.</p>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-end">
+        <button id="closeHelpConfirmBtn" class="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs">
+          समजले (Got it)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOAST CONTAINER ================= -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="mt-auto border-t border-orange-500/20 bg-slate-950/80 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 space-y-2">
+      <p class="font-medium text-slate-400" data-i18n="footerText">
+        चित्रसृष्टी - मराठी भाषा आणि प्रगत कृत्रिम बुद्धिमत्ता (AI) यांचा सुंदर संगम
+      </p>
+      <p data-i18n="footerMadeWith">
+        महाराष्ट्रातील संस्कृती, कला आणि आधुनिक तंत्रज्ञानाच्या प्रेमातून साकारलेले.
+      </p>
+    </div>
+  </footer>
+
+  <!-- ================= JAVASCRIPT MODULES ================= -->
+  <script src="i18n.js?v=2.1"></script>
+  <script src="marathi-prompts.js?v=2.1"></script>
+  <script src="marathi-keyboard.js?v=2.1"></script>
+  <script src="app.js?v=2.1"></script>
+</body>
+</html>

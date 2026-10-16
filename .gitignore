@@ -1,0 +1,23 @@
+# Generated images (don't push user-generated images to GitHub)
+outputs/
+
+# Node modules (not needed - no npm packages used)
+node_modules/
+
+# Windows temp files
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# Test/debug files
+test_dom_ids.js
+
+# Environment / secrets
+.env
+*.env
+
+# Logs
+*.log
+
+# OS files
+.DS_Store

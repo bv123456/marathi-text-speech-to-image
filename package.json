@@ -1,0 +1,19 @@
+{
+  "name": "marathi-text-speech-to-image",
+  "version": "1.0.0",
+  "description": "मराठी मजकूर आणि आवाज ते AI चित्र - Convert Marathi text and speech to corresponding AI images",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "marathi",
+    "speech-to-image",
+    "text-to-image",
+    "ai",
+    "devanagari",
+    "image-generation"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}
