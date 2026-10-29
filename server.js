@@ -426,6 +426,9 @@ function enrichTranslation(marathiOriginal, englishTranslated) {
   let result = englishTranslated;
 
   // -- EXACT FOCUSED COMPOSITION BINDINGS (Keeps subject + object both in frame with high clarity) --
+  if (/(मोर).*(पिसारा|नाच|पाऊस)|(पिसारा|नाच|पाऊस).*(मोर)/i.test(marathiOriginal)) {
+    return 'authentic crisp real life photograph of an Indian peacock dancing in rain, colorful peacock tail feathers fully fanned open in a magnificent wide display, raindrops visible, centered, 35mm lens, sharp focus';
+  }
   if (/(कुत्रा|पिल्लू).*(चेंडू|बॉल)|(चेंडू|बॉल).*(कुत्रा|पिल्लू)/i.test(marathiOriginal)) {
     return 'sharp clear photo of a small puppy playing with a bright red ball on green grass, centered, dog and red ball clearly visible';
   }
@@ -437,6 +440,11 @@ function enrichTranslation(marathiOriginal, englishTranslated) {
   }
   if (/(वारकरी|वारी).*(पंढरपूर)|(पंढरपूर).*(वारकरी|वारी)/i.test(marathiOriginal)) {
     return 'sharp photo of Varkari pilgrims carrying saffron flag walking towards Pandharpur temple, clear daylight';
+  }
+
+  // If "मोर" is present and translation didn't mention fanned feathers, guarantee it
+  if (/(मोर)/i.test(marathiOriginal) && !lowerResult.includes('tail feathers')) {
+    result = `${result}, magnificent peacock with colorful tail feathers fully spread open`;
   }
 
   // -- Limit visual dictionary additions to at most 1-2 most relevant keywords to prevent prompt dilution --

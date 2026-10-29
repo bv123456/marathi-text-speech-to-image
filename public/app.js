@@ -544,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       // Step 1: Translate & Enhance Prompt
       let enhancedPrompt = '';
-      if (liveEnglishPrompt && liveEnglishPrompt.value.trim()) {
+      if (userEditedEnglishPrompt && liveEnglishPrompt && liveEnglishPrompt.value.trim()) {
         enhancedPrompt = liveEnglishPrompt.value.trim();
       } else {
         const transRes = await fetch('/api/translate', {
