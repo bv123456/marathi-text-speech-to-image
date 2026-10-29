@@ -13,6 +13,25 @@ const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const OUTPUTS_DIR = path.join(__dirname, 'outputs');
 
+// ============================================================
+// DEMO LOCK & SECURITY CONTROLS
+// 1. Password Protection (Default: "chitra2026")
+// 2. 3-Day Automatic Expiry Lock (Starts from Oct 29, 2026)
+// ============================================================
+const DEMO_CONFIG = {
+  // If true, user must enter DEMO_PASSWORD to access
+  passwordProtected: true,
+  demoPassword: process.env.DEMO_PASSWORD || 'chitra2026',
+
+  // 3-Day Automatic Expiry (3 days from Oct 29, 2026 = Nov 1, 2026 23:59:59 IST)
+  // After this timestamp, demo automatically locks even with password
+  expiryEnabled: true,
+  expiryTimestamp: new Date('2026-11-01T23:59:59+05:30').getTime(),
+
+  // Emergency Master killswitch (Set true or environment variable APP_LOCKED=true)
+  killswitch: process.env.APP_LOCKED === 'true'
+};
+
 // Ensure outputs directory exists
 if (!fs.existsSync(OUTPUTS_DIR)) {
   fs.mkdirSync(OUTPUTS_DIR, { recursive: true });
@@ -715,6 +734,56 @@ const server = http.createServer(async (req, res) => {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     });
     return res.end();
+  }
+
+  // ================= DEMO LOCK STATUS API =================
+  if (pathname === '/api/demo-status' && method === 'GET') {
+    const now = Date.now();
+    const isExpired = DEMO_CONFIG.expiryEnabled && now > DEMO_CONFIG.expiryTimestamp;
+    const isLocked = DEMO_CONFIG.killswitch || isExpired;
+    return sendJSON(res, 200, {
+      locked: isLocked,
+      expired: isExpired,
+      passwordRequired: DEMO_CONFIG.passwordProtected,
+      expiryDate: new Date(DEMO_CONFIG.expiryTimestamp).toISOString(),
+      daysLeft: Math.max(0, Math.ceil((DEMO_CONFIG.expiryTimestamp - now) / (1000 * 60 * 60 * 24)))
+    });
+  }
+
+  // ================= DEMO VERIFY PASSWORD API =================
+  if (pathname === '/api/verify-password' && method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const inputPass = (body.password || '').trim();
+      const now = Date.now();
+      const isExpired = DEMO_CONFIG.expiryEnabled && now > DEMO_CONFIG.expiryTimestamp;
+
+      if (DEMO_CONFIG.killswitch || isExpired) {
+        return sendJSON(res, 403, {
+          success: false,
+          error: 'डेमो कालावधी समाप्त झाला आहे. कृपया ॲक्सेससाठी विकासकाशी (Developer) संपर्क साधा.'
+        });
+      }
+
+      if (inputPass === DEMO_CONFIG.demoPassword) {
+        return sendJSON(res, 200, { success: true, message: 'प्रवेश यशस्वी!' });
+      } else {
+        return sendJSON(res, 401, { success: false, error: 'चुकीचा पासवर्ड! कृपया योग्य पासवर्ड टाका.' });
+      }
+    } catch (err) {
+      return sendJSON(res, 500, { success: false, error: err.message });
+    }
+  }
+
+  // Check demo expiry before generating
+  if ((pathname === '/api/generate' || pathname === '/api/translate') && method === 'POST') {
+    const now = Date.now();
+    const isExpired = DEMO_CONFIG.expiryEnabled && now > DEMO_CONFIG.expiryTimestamp;
+    if (DEMO_CONFIG.killswitch || isExpired) {
+      return sendJSON(res, 403, {
+        error: 'डेमो कालावधी संपला आहे (Demo Period Expired). ॲप अनलॉक करण्यासाठी पेमेंट पूर्ण करा.'
+      });
+    }
   }
 
   // 1. Translation Endpoint

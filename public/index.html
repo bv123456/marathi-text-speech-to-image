@@ -40,6 +40,59 @@
 </head>
 <body class="bg-ambient min-h-screen text-slate-100 flex flex-col selection:bg-orange-600 selection:text-white">
 
+  <!-- ================= DEMO PASSWORD & EXPIRY LOCK MODAL ================= -->
+  <div id="demoLockOverlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-orange-500/40 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl shadow-orange-500/20 text-center relative overflow-hidden">
+      
+      <!-- Top Glow -->
+      <div class="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Icon & Title -->
+      <div class="space-y-2">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-600 to-orange-500 mx-auto flex items-center justify-center text-3xl shadow-lg shadow-orange-500/30">
+          🔐
+        </div>
+        <h2 class="text-2xl font-extrabold brand-font text-white">चित्रसृष्टी AI</h2>
+        <div id="demoBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+          ⏱️ ३ दिवसांचा चाचणी डेमो (3-Day Trial Access)
+        </div>
+      </div>
+
+      <!-- Expiry Notice (shown when expired) -->
+      <div id="expiredNotice" class="hidden p-4 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs sm:text-sm space-y-2">
+        <div class="text-xl">⚠️</div>
+        <p class="font-bold text-rose-300">डेमो कालावधी समाप्त झाला आहे!</p>
+        <p class="text-xs text-rose-200/80">पूर्ण ॲक्सेस मिळवण्यासाठी आणि ॲप अनलॉक करण्यासाठी कृपया सॉफ्टवेअर डेव्हलपरशी संपर्क साधा.</p>
+      </div>
+
+      <!-- Password Input Form (shown when active) -->
+      <form id="demoPasswordForm" class="space-y-4">
+        <div class="text-left space-y-1.5">
+          <label class="block text-xs font-medium text-slate-300">डेमो ॲक्सेस पासवर्ड टाका:</label>
+          <div class="relative">
+            <input type="password" id="demoPasswordInput" placeholder="येथे पासवर्ड टाका..." required autocomplete="off"
+                   class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 text-white placeholder-slate-500 outline-none transition text-sm">
+            <button type="button" id="togglePasswordVisibility" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1">
+              👁️
+            </button>
+          </div>
+          <p id="passwordError" class="text-xs text-rose-400 hidden mt-1"></p>
+        </div>
+
+        <button type="submit" id="unlockDemoBtn"
+                class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-orange-500/30 transition duration-200 flex items-center justify-center gap-2">
+          <span>ॲप अनलॉक करा (Unlock App)</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+
+      <!-- Demo Info Footer -->
+      <div class="border-t border-slate-800 pt-3 text-[11px] text-slate-400">
+        <p>अधिकृत डेमो व्हर्जन • सर्व हक्क सुरक्षित</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= TOP NAVIGATION ================= -->
   <header class="sticky top-0 z-40 w-full backdrop-blur-md bg-slate-950/80 border-b border-orange-500/20 px-4 lg:px-8 py-3">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -838,9 +891,9 @@
   </footer>
 
   <!-- ================= JAVASCRIPT MODULES ================= -->
-  <script src="i18n.js?v=2.2"></script>
-  <script src="marathi-prompts.js?v=2.2"></script>
-  <script src="marathi-keyboard.js?v=2.2"></script>
-  <script src="app.js?v=2.2"></script>
+  <script src="i18n.js?v=2.3"></script>
+  <script src="marathi-prompts.js?v=2.3"></script>
+  <script src="marathi-keyboard.js?v=2.3"></script>
+  <script src="app.js?v=2.3"></script>
 </body>
 </html>

@@ -9,6 +9,91 @@ document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
   }
 
+  // ================= DEMO LOCK & EXPIRY CLIENT CONTROLLER =================
+  const demoLockOverlay = document.getElementById('demoLockOverlay');
+  const demoPasswordForm = document.getElementById('demoPasswordForm');
+  const demoPasswordInput = document.getElementById('demoPasswordInput');
+  const passwordError = document.getElementById('passwordError');
+  const expiredNotice = document.getElementById('expiredNotice');
+  const demoBadge = document.getElementById('demoBadge');
+  const togglePasswordVisibility = document.getElementById('togglePasswordVisibility');
+
+  if (togglePasswordVisibility && demoPasswordInput) {
+    togglePasswordVisibility.addEventListener('click', () => {
+      const isPass = demoPasswordInput.type === 'password';
+      demoPasswordInput.type = isPass ? 'text' : 'password';
+      togglePasswordVisibility.textContent = isPass ? '🙈' : '👁️';
+    });
+  }
+
+  // Check demo status on startup
+  async function checkDemoStatus() {
+    try {
+      const res = await fetch('/api/demo-status');
+      const data = await res.json();
+
+      if (data.locked) {
+        if (demoLockOverlay) demoLockOverlay.classList.remove('hidden');
+        if (expiredNotice) expiredNotice.classList.remove('hidden');
+        if (demoPasswordForm) demoPasswordForm.classList.add('hidden');
+        return;
+      }
+
+      if (data.daysLeft !== undefined && demoBadge) {
+        demoBadge.textContent = `⏱️ चाचणी डेमो: ${data.daysLeft} दिवस शिल्लक (Trial: ${data.daysLeft} Days Left)`;
+      }
+
+      // Check if unlocked in current session
+      const isUnlocked = sessionStorage.getItem('chitrasrushti_unlocked') === 'true';
+      if (isUnlocked && demoLockOverlay) {
+        demoLockOverlay.classList.add('hidden');
+      }
+    } catch (e) {
+      console.warn('Demo status check failed:', e);
+    }
+  }
+
+  if (demoPasswordForm) {
+    demoPasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = (demoPasswordInput ? demoPasswordInput.value : '').trim();
+      if (!password) return;
+
+      try {
+        const unlockBtn = document.getElementById('unlockDemoBtn');
+        if (unlockBtn) unlockBtn.disabled = true;
+
+        const res = await fetch('/api/verify-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          sessionStorage.setItem('chitrasrushti_unlocked', 'true');
+          if (demoLockOverlay) demoLockOverlay.classList.add('hidden');
+          showToast('ॲप यशस्वीरित्या अनलॉक झाले!', 'success');
+        } else {
+          if (passwordError) {
+            passwordError.textContent = data.error || 'चुकीचा पासवर्ड! कृपया योग्य पासवर्ड टाका.';
+            passwordError.classList.remove('hidden');
+          }
+        }
+      } catch (err) {
+        if (passwordError) {
+          passwordError.textContent = 'सर्व्हरशी संपर्क होऊ शकला नाही. पुन्हा प्रयत्न करा.';
+          passwordError.classList.remove('hidden');
+        }
+      } finally {
+        const unlockBtn = document.getElementById('unlockDemoBtn');
+        if (unlockBtn) unlockBtn.disabled = false;
+      }
+    });
+  }
+
+  checkDemoStatus();
+
   // DOM Elements
   const promptInput = document.getElementById('promptInput');
   const charCount = document.getElementById('charCount');
