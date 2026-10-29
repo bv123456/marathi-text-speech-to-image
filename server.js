@@ -35,18 +35,18 @@ const MIME_TYPES = {
   '.mp3': 'audio/mpeg'
 };
 
-// Style enhancers mapping
+// Style enhancers mapping - Focused, crisp, high-clarity tags without prompt clutter
 const STYLE_PROMPTS = {
-  photorealistic: 'hyper-realistic photography, 8k resolution, cinematic lighting, shot on 35mm lens, sharp focus, vivid colors, masterwork photo',
-  warli: 'traditional Maharashtra Warli folk art painting, white rice paste pigment figures on earthy red terracotta mud background, tribal geometric figures, authentic village life patterns',
-  rajaravivarma: 'royal classic oil painting in the distinguished style of Raja Ravi Varma, rich ornate textures, dramatic chiaroscuro lighting, majestic traditional Indian aesthetic, opulent drapery',
-  cinematic: 'cinematic blockbuster movie still, dramatic lighting, volumetric atmosphere, anamorphic lens, epic color grading, 8k depth',
-  watercolor: 'delicate watercolor illustration, expressive wet-on-wet paint washes, soft color bleeds, textured watercolor paper, artistic splashes',
-  digital3d: '3D digital render, Unreal Engine 5, Octane render, glowing ambient lighting, volumetric depth, 8k resolution',
-  anime: 'Studio Ghibli aesthetic, anime concept art style, hand-painted background, vivid color palette, whimsical atmosphere, Makoto Shinkai sky',
-  peshwai: '18th century royal Peshwai Maratha era, opulent gold zari Paithani silk, heritage Maratha architectural details, regal historic portrait',
-  sketch: 'fine charcoal and graphite pencil sketch, expressive hand-drawn crosshatching, detailed shading on parchment paper',
-  none: 'natural realistic lighting, detailed, 8k'
+  photorealistic: 'crisp sharp focus, centered, 8k uhd, photorealistic, high resolution, highly detailed',
+  warli: 'authentic Warli folk painting, white rice paste on terracotta, geometric folk art, sharp details',
+  rajaravivarma: 'Raja Ravi Varma oil painting style, royal Indian classic portrait, rich colors, sharp focus',
+  cinematic: 'cinematic lighting, sharp focus, 8k, detailed, dramatic atmosphere',
+  watercolor: 'clean watercolor painting, vibrant pigment, clear detailed illustration',
+  digital3d: 'clean 3D render, Octane render, sharp focus, high detail, 8k',
+  anime: 'vibrant anime aesthetic, Makoto Shinkai style, crisp clean lines, highly detailed',
+  peshwai: 'Peshwai royal Maratha era portrait, Paithani silk, sharp detailed historic artwork',
+  sketch: 'detailed pencil sketch, fine charcoal lines, high contrast, clean white background',
+  none: 'clear sharp focus, high detail, 8k'
 };
 
 // ============================================================
@@ -425,33 +425,34 @@ const MARATHI_VISUAL_DICT = [
 function enrichTranslation(marathiOriginal, englishTranslated) {
   let result = englishTranslated;
 
-  // -- EXACT SCENE OVERRIDES for multi-object compositions --
+  // -- EXACT FOCUSED COMPOSITION BINDINGS (Keeps subject + object both in frame with high clarity) --
   if (/(कुत्रा|पिल्लू).*(चेंडू|बॉल)|(चेंडू|बॉल).*(कुत्रा|पिल्लू)/i.test(marathiOriginal)) {
-    return 'A small playful puppy with a bright red rubber ball, clear bright red toy ball clearly visible right next to the puppy on green grass';
+    return 'sharp clear photo of a small puppy playing with a bright red ball on green grass, centered, dog and red ball clearly visible';
   }
   if (/(गुढी).*(रांगोळी)|(रांगोळी).*(गुढी)/i.test(marathiOriginal)) {
-    return 'Gudi Padwa festival scene: a tall decorated Gudi pole with bright silk cloth, neem leaves, mango leaves garland, sugar crystal garland and shiny copper kalash pot on top, erected upright at a traditional wooden doorstep, a vibrant colorful rangoli geometric floor pattern with marigold flowers in the foreground, festive Maharashtrian home exterior setting, bright morning sunlight, ultra detailed, photorealistic masterpiece';
+    return 'sharp clear photo of a traditional decorated Gudi pole erected at doorstep with colorful floor rangoli in front, daylight, high detail';
   }
   if (/(दिवाळी|पणत्या).*(रांगोळी)|(रांगोळी).*(दिवाळी|पणत्या)/i.test(marathiOriginal)) {
-    return 'Beautiful Diwali scene: rows of glowing clay diya oil lamps arranged in a beautiful pattern, intricate colorful rangoli floor art surrounded by marigold flowers, warm festive golden lighting, dark night background, photorealistic';
+    return 'sharp clear photo of glowing clay diya oil lamps placed around a colorful floor rangoli, warm lighting, centered';
   }
   if (/(वारकरी|वारी).*(पंढरपूर)|(पंढरपूर).*(वारकरी|वारी)/i.test(marathiOriginal)) {
-    return 'Thousands of Varkari devotee pilgrims in white clothes walking to Pandharpur on a long road, carrying saffron flags, singing devotional abhangas, playing cymbals and mridangas, Vitthal temple visible in the background, golden hour light, photorealistic';
+    return 'sharp photo of Varkari pilgrims carrying saffron flag walking towards Pandharpur temple, clear daylight';
   }
 
-  // -- Apply MARATHI_VISUAL_DICT: collect all matched visual descriptors --
+  // -- Limit visual dictionary additions to at most 1-2 most relevant keywords to prevent prompt dilution --
   const addedKeys = new Set();
   const lowerResult = result.toLowerCase();
+  let additionsCount = 0;
 
   for (const entry of MARATHI_VISUAL_DICT) {
+    if (additionsCount >= 2) break; // Don't overload prompt
     if (entry.p.test(marathiOriginal)) {
       const desc = entry.en.toLowerCase();
-      // Use first 4 words as uniqueness key
-      const key = desc.split(' ').slice(0, 4).join(' ');
       const firstWord = desc.split(' ')[0];
-      if (!lowerResult.includes(firstWord) && !addedKeys.has(key)) {
-        addedKeys.add(key);
+      if (!lowerResult.includes(firstWord) && !addedKeys.has(firstWord)) {
+        addedKeys.add(firstWord);
         result = `${result}, ${entry.en}`;
+        additionsCount++;
       }
     }
   }
