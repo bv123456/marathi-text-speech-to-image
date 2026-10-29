@@ -35,18 +35,18 @@ const MIME_TYPES = {
   '.mp3': 'audio/mpeg'
 };
 
-// Style enhancers mapping - Focused, crisp, high-clarity tags without prompt clutter
+// Style enhancers mapping - Tuned for real, authentic photography (वास्तववादी छायाचित्र)
 const STYLE_PROMPTS = {
-  photorealistic: 'crisp sharp focus, centered, 8k uhd, photorealistic, high resolution, highly detailed',
-  warli: 'authentic Warli folk painting, white rice paste on terracotta, geometric folk art, sharp details',
-  rajaravivarma: 'Raja Ravi Varma oil painting style, royal Indian classic portrait, rich colors, sharp focus',
-  cinematic: 'cinematic lighting, sharp focus, 8k, detailed, dramatic atmosphere',
+  photorealistic: 'authentic real life photo, sharp DSLR photograph, natural lighting, highly detailed, realistic, clean focus, 35mm lens, 8k uhd',
+  warli: 'authentic Warli folk painting, white rice paste on terracotta, geometric tribal folk art, sharp details',
+  rajaravivarma: 'Raja Ravi Varma oil painting style, royal Indian classic portrait, rich textures, dramatic chiaroscuro',
+  cinematic: 'cinematic still, natural film lighting, depth of field, sharp focus, 8k',
   watercolor: 'clean watercolor painting, vibrant pigment, clear detailed illustration',
   digital3d: 'clean 3D render, Octane render, sharp focus, high detail, 8k',
   anime: 'vibrant anime aesthetic, Makoto Shinkai style, crisp clean lines, highly detailed',
   peshwai: 'Peshwai royal Maratha era portrait, Paithani silk, sharp detailed historic artwork',
   sketch: 'detailed pencil sketch, fine charcoal lines, high contrast, clean white background',
-  none: 'clear sharp focus, high detail, 8k'
+  none: 'authentic real photo, sharp focus, natural lighting, high detail, 8k'
 };
 
 // ============================================================
@@ -629,12 +629,13 @@ async function generateSafeImage(prompt, options = {}) {
     try {
       let activePrompt = cleanPrompt;
       if (attempt === 2) {
-        activePrompt = cleanPrompt.split(',').slice(0, 4).join(', ') + ', ultra detailed, 8k';
+        activePrompt = cleanPrompt + ', authentic real photograph, natural lighting';
       } else if (attempt === 3) {
-        activePrompt = cleanPrompt.split(',')[0].trim() + ', detailed photorealistic masterpiece, 8k';
+        activePrompt = cleanPrompt.split(',').slice(0, 3).join(', ') + ', realistic photo';
       }
 
-      const targetUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(activePrompt)}`;
+      const seedParam = seed ? `?seed=${seed}` : `?seed=${Math.floor(Math.random() * 999999)}`;
+      const targetUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(activePrompt)}${seedParam}`;
       console.log(`[Image Generation Attempt ${attempt}]:`, activePrompt.slice(0, 100));
 
       lastRequestTime = Date.now();
