@@ -422,10 +422,39 @@ const MARATHI_VISUAL_DICT = [
 // SMART ENRICHMENT ENGINE
 // Handles any Marathi text for accurate, visually precise prompts
 // ============================================================
+// Common Marathi idioms / cultural verbs normalization map
+// Ensures dynamic translation never misses cultural idioms or action verbs
+const MARATHI_IDIOM_MAP = [
+  { test: /पिसारा\s*फुलव/i, replaceWith: 'colorful tail feathers fully spread and fanned open' },
+  { test: /उभारलेली\s*गुढी|गुढी\s*उभार/i, replaceWith: 'erected upright traditional decorated Gudi flag pole' },
+  { test: /रंगीबेरंगी\s*रांगोळी/i, replaceWith: 'vibrant colorful geometric floor rangoli art' },
+  { test: /तेवणाऱ्या\s*पणत्या|पेटवलेल्या\s*पणत्या/i, replaceWith: 'warm glowing lit clay diya oil lamps' },
+  { test: /वारकरी\s*दिंडी|वारी/i, replaceWith: 'Varkari pilgrims holding saffron flags walking together' },
+  { test: /अश्वारूढ/i, replaceWith: 'riding majestically on a horse' },
+  { test: /बैलजोडी/i, replaceWith: 'pair of white bullocks' },
+  { test: /कोवळ्या\s*उन्हात/i, replaceWith: 'in the soft golden morning sunlight' },
+  { test: /उसळणाऱ्या\s*लाटा/i, replaceWith: 'splashing ocean waves' }
+];
+
+// ============================================================
+// UNIVERSAL DYNAMIC PROMPT BUILDER
+// Converts ANY Marathi sentence into an accurate, visually grounded prompt
+// ============================================================
 function enrichTranslation(marathiOriginal, englishTranslated) {
   let result = englishTranslated;
 
-  // -- EXACT FOCUSED COMPOSITION BINDINGS (Keeps subject + object both in frame with high clarity) --
+  // 1. Check cultural idioms and ensure critical visual phrases are present
+  for (const item of MARATHI_IDIOM_MAP) {
+    if (item.test.test(marathiOriginal)) {
+      const lower = result.toLowerCase();
+      const firstWord = item.replaceWith.split(' ')[0].toLowerCase();
+      if (!lower.includes(firstWord)) {
+        result = `${result}, ${item.replaceWith}`;
+      }
+    }
+  }
+
+  // 2. Specific object-binding overrides (Dog+Ball, Gudi+Rangoli, Peacock, etc.)
   if (/(मोर).*(पिसारा|नाच|पाऊस)|(पिसारा|नाच|पाऊस).*(मोर)/i.test(marathiOriginal)) {
     return 'authentic crisp real life photograph of an Indian peacock dancing in rain, colorful peacock tail feathers fully fanned open in a magnificent wide display, raindrops visible, centered, 35mm lens, sharp focus';
   }
@@ -442,18 +471,13 @@ function enrichTranslation(marathiOriginal, englishTranslated) {
     return 'sharp photo of Varkari pilgrims carrying saffron flag walking towards Pandharpur temple, clear daylight';
   }
 
-  // If "मोर" is present and translation didn't mention fanned feathers, guarantee it
-  if (/(मोर)/i.test(marathiOriginal) && !lowerResult.includes('tail feathers')) {
-    result = `${result}, magnificent peacock with colorful tail feathers fully spread open`;
-  }
-
-  // -- Limit visual dictionary additions to at most 1-2 most relevant keywords to prevent prompt dilution --
+  // 3. Dynamic Visual Dictionary Enrichment for ANY sentence
   const addedKeys = new Set();
   const lowerResult = result.toLowerCase();
   let additionsCount = 0;
 
   for (const entry of MARATHI_VISUAL_DICT) {
-    if (additionsCount >= 2) break; // Don't overload prompt
+    if (additionsCount >= 2) break;
     if (entry.p.test(marathiOriginal)) {
       const desc = entry.en.toLowerCase();
       const firstWord = desc.split(' ')[0];
