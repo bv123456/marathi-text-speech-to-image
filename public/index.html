@@ -40,59 +40,6 @@
 </head>
 <body class="bg-ambient min-h-screen text-slate-100 flex flex-col selection:bg-orange-600 selection:text-white">
 
-  <!-- ================= DEMO PASSWORD & EXPIRY LOCK MODAL ================= -->
-  <div id="demoLockOverlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-orange-500/40 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl shadow-orange-500/20 text-center relative overflow-hidden">
-      
-      <!-- Top Glow -->
-      <div class="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>
-
-      <!-- Icon & Title -->
-      <div class="space-y-2">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-600 to-orange-500 mx-auto flex items-center justify-center text-3xl shadow-lg shadow-orange-500/30">
-          🔐
-        </div>
-        <h2 class="text-2xl font-extrabold brand-font text-white">चित्रसृष्टी AI</h2>
-        <div id="demoBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
-          ⏱️ ३ दिवसांचा चाचणी डेमो (3-Day Trial Access)
-        </div>
-      </div>
-
-      <!-- Expiry Notice (shown when expired) -->
-      <div id="expiredNotice" class="hidden p-4 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs sm:text-sm space-y-2">
-        <div class="text-xl">⚠️</div>
-        <p class="font-bold text-rose-300">डेमो कालावधी समाप्त झाला आहे!</p>
-        <p class="text-xs text-rose-200/80">पूर्ण ॲक्सेस मिळवण्यासाठी आणि ॲप अनलॉक करण्यासाठी कृपया सॉफ्टवेअर डेव्हलपरशी संपर्क साधा.</p>
-      </div>
-
-      <!-- Password Input Form (shown when active) -->
-      <form id="demoPasswordForm" class="space-y-4">
-        <div class="text-left space-y-1.5">
-          <label class="block text-xs font-medium text-slate-300">डेमो ॲक्सेस पासवर्ड टाका:</label>
-          <div class="relative">
-            <input type="password" id="demoPasswordInput" placeholder="येथे पासवर्ड टाका..." required autocomplete="off"
-                   class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 text-white placeholder-slate-500 outline-none transition text-sm">
-            <button type="button" id="togglePasswordVisibility" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1">
-              👁️
-            </button>
-          </div>
-          <p id="passwordError" class="text-xs text-rose-400 hidden mt-1"></p>
-        </div>
-
-        <button type="submit" id="unlockDemoBtn"
-                class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-orange-500/30 transition duration-200 flex items-center justify-center gap-2">
-          <span>ॲप अनलॉक करा (Unlock App)</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </button>
-      </form>
-
-      <!-- Demo Info Footer -->
-      <div class="border-t border-slate-800 pt-3 text-[11px] text-slate-400">
-        <p>अधिकृत डेमो व्हर्जन • सर्व हक्क सुरक्षित</p>
-      </div>
-    </div>
-  </div>
-
   <!-- ================= TOP NAVIGATION ================= -->
   <header class="sticky top-0 z-40 w-full backdrop-blur-md bg-slate-950/80 border-b border-orange-500/20 px-4 lg:px-8 py-3">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -140,6 +87,13 @@
         <!-- Help / Info Modal Button -->
         <button id="helpModalBtn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm border border-slate-700 transition" title="मदत आणि माहिती">
           <i data-lucide="help-circle" class="w-4 h-4"></i>
+        </button>
+
+        <!-- Demo Trial / License Status Button -->
+        <button id="trialBadgeBtn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition" title="डेमो कालावधी व अनलॉक सेटिंग्ज">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse" id="trialPulseDot"></span>
+          <span id="trialCountdownText">डेमो: ३ दिवस</span>
+          <i data-lucide="lock" class="w-3.5 h-3.5" id="trialLockIcon"></i>
         </button>
 
         <!-- Language Switcher -->
@@ -872,6 +826,73 @@
           समजले (Got it)
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ================= DEMO LOCK & LICENSE MODAL ================= -->
+  <div id="licenseModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-md w-full p-6 sm:p-7 space-y-5 shadow-2xl text-slate-100 relative overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-600 to-orange-500 flex items-center justify-center text-xl shadow-lg shadow-orange-500/30">
+            🔐
+          </div>
+          <div>
+            <h3 class="font-extrabold text-white text-base sm:text-lg" id="licenseModalTitle">डेमो ॲक्सेस & सुरक्षा</h3>
+            <p class="text-xs text-amber-400 font-medium" id="licenseModalSubtitle">३ दिवसांचा ऑटोमॅटिक लॉक सिस्टीम</p>
+          </div>
+        </div>
+        <button id="closeLicenseModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
+      </div>
+
+      <!-- Status Box -->
+      <div id="licenseStatusCard" class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">सद्यस्थिती (Status):</span>
+          <span id="licenseStatusPill" class="font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            डेमो चालू (Trial Active)
+          </span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">उर्वरित वेळ (Time Left):</span>
+          <span id="licenseTimeLeftDisplay" class="font-semibold text-slate-200">गणना करत आहे...</span>
+        </div>
+      </div>
+
+      <!-- Notice when expired -->
+      <div id="licenseExpiredNotice" class="hidden p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-xs text-rose-200 space-y-1">
+        <p class="font-bold flex items-center gap-1 text-rose-300 text-sm">
+          <span>🔒</span> डेमो कालावधी संपला आहे!
+        </p>
+        <p class="text-slate-300 leading-relaxed">
+          या सॉफ्टवेअरचा मोफत ३ दिवसांचा डेमो संपला आहे. पूर्ण व्हर्जन अनलॉक करण्यासाठी कृपया सॉफ्टवेअर मालकाशी संपर्क साधा आणि पेमेंट पूर्ण करा.
+        </p>
+      </div>
+
+      <!-- Password Input Form -->
+      <form id="licenseUnlockForm" class="space-y-3.5">
+        <div>
+          <label for="licensePasswordInput" class="block text-xs font-semibold text-slate-300 mb-1.5">
+            ॲडमिन अनलॉक पासवर्ड (Password):
+          </label>
+          <div class="relative">
+            <input type="password" id="licensePasswordInput" placeholder="पासवर्ड टाका (उदा. MAHA@2026)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-sm text-white placeholder-slate-500 outline-none pr-10">
+            <button type="button" id="togglePasswordVisibilityBtn" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 text-sm">👁️</button>
+          </div>
+          <p id="licenseFormMsg" class="text-[11px] text-slate-400 mt-1.5 hidden"></p>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button type="submit" id="submitUnlockBtn" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 text-white font-bold text-xs sm:text-sm shadow-lg shadow-orange-500/25 transition flex items-center justify-center gap-1.5">
+            <span>🔓 अनलॉक करा (Unlock)</span>
+          </button>
+          <button type="button" id="instantLockBtn" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-rose-950 hover:text-rose-300 border border-slate-700 text-slate-300 text-xs font-semibold transition" title="क्लायंटसाठी ॲप आत्ता लगेच लॉक करा">
+            🔒 आत्ताच लॉक करा
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

@@ -9,91 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
   }
 
-  // ================= DEMO LOCK & EXPIRY CLIENT CONTROLLER =================
-  const demoLockOverlay = document.getElementById('demoLockOverlay');
-  const demoPasswordForm = document.getElementById('demoPasswordForm');
-  const demoPasswordInput = document.getElementById('demoPasswordInput');
-  const passwordError = document.getElementById('passwordError');
-  const expiredNotice = document.getElementById('expiredNotice');
-  const demoBadge = document.getElementById('demoBadge');
-  const togglePasswordVisibility = document.getElementById('togglePasswordVisibility');
-
-  if (togglePasswordVisibility && demoPasswordInput) {
-    togglePasswordVisibility.addEventListener('click', () => {
-      const isPass = demoPasswordInput.type === 'password';
-      demoPasswordInput.type = isPass ? 'text' : 'password';
-      togglePasswordVisibility.textContent = isPass ? '🙈' : '👁️';
-    });
-  }
-
-  // Check demo status on startup
-  async function checkDemoStatus() {
-    try {
-      const res = await fetch('/api/demo-status');
-      const data = await res.json();
-
-      if (data.locked) {
-        if (demoLockOverlay) demoLockOverlay.classList.remove('hidden');
-        if (expiredNotice) expiredNotice.classList.remove('hidden');
-        if (demoPasswordForm) demoPasswordForm.classList.add('hidden');
-        return;
-      }
-
-      if (data.daysLeft !== undefined && demoBadge) {
-        demoBadge.textContent = `⏱️ चाचणी डेमो: ${data.daysLeft} दिवस शिल्लक (Trial: ${data.daysLeft} Days Left)`;
-      }
-
-      // Check if unlocked in current session
-      const isUnlocked = sessionStorage.getItem('chitrasrushti_unlocked') === 'true';
-      if (isUnlocked && demoLockOverlay) {
-        demoLockOverlay.classList.add('hidden');
-      }
-    } catch (e) {
-      console.warn('Demo status check failed:', e);
-    }
-  }
-
-  if (demoPasswordForm) {
-    demoPasswordForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const password = (demoPasswordInput ? demoPasswordInput.value : '').trim();
-      if (!password) return;
-
-      try {
-        const unlockBtn = document.getElementById('unlockDemoBtn');
-        if (unlockBtn) unlockBtn.disabled = true;
-
-        const res = await fetch('/api/verify-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
-        });
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-          sessionStorage.setItem('chitrasrushti_unlocked', 'true');
-          if (demoLockOverlay) demoLockOverlay.classList.add('hidden');
-          showToast('ॲप यशस्वीरित्या अनलॉक झाले!', 'success');
-        } else {
-          if (passwordError) {
-            passwordError.textContent = data.error || 'चुकीचा पासवर्ड! कृपया योग्य पासवर्ड टाका.';
-            passwordError.classList.remove('hidden');
-          }
-        }
-      } catch (err) {
-        if (passwordError) {
-          passwordError.textContent = 'सर्व्हरशी संपर्क होऊ शकला नाही. पुन्हा प्रयत्न करा.';
-          passwordError.classList.remove('hidden');
-        }
-      } finally {
-        const unlockBtn = document.getElementById('unlockDemoBtn');
-        if (unlockBtn) unlockBtn.disabled = false;
-      }
-    });
-  }
-
-  checkDemoStatus();
-
   // DOM Elements
   const promptInput = document.getElementById('promptInput');
   const charCount = document.getElementById('charCount');
@@ -672,6 +587,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const genData = await genRes.json();
 
       if (!genRes.ok || !genData.success) {
+        if (genData && genData.locked) {
+          if (typeof checkLicenseStatus === 'function') checkLicenseStatus();
+        }
         throw new Error(genData.error || 'Failed to generate image');
       }
 
@@ -683,6 +601,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('[Generation Error]', err);
       showToast(`त्रुटी: ${err.message}`, 'error');
+      if (err.message && err.message.includes('डेमो कालावधी')) {
+        if (typeof checkLicenseStatus === 'function') checkLicenseStatus();
+      }
     } finally {
       setGeneratingState(false);
     }
@@ -945,6 +866,234 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => toast.remove(), 300);
     }, 4000);
   }
+
+  // ================= 14. DEMO LICENSE & TRIAL LOCK CONTROLLER =================
+  const trialBadgeBtn = document.getElementById('trialBadgeBtn');
+  const trialCountdownText = document.getElementById('trialCountdownText');
+  const trialPulseDot = document.getElementById('trialPulseDot');
+  const trialLockIcon = document.getElementById('trialLockIcon');
+  const licenseModal = document.getElementById('licenseModal');
+  const closeLicenseModalBtn = document.getElementById('closeLicenseModalBtn');
+  const licenseStatusPill = document.getElementById('licenseStatusPill');
+  const licenseTimeLeftDisplay = document.getElementById('licenseTimeLeftDisplay');
+  const licenseExpiredNotice = document.getElementById('licenseExpiredNotice');
+  const licenseUnlockForm = document.getElementById('licenseUnlockForm');
+  const licensePasswordInput = document.getElementById('licensePasswordInput');
+  const togglePasswordVisibilityBtn = document.getElementById('togglePasswordVisibilityBtn');
+  const licenseFormMsg = document.getElementById('licenseFormMsg');
+  const instantLockBtn = document.getElementById('instantLockBtn');
+
+  let currentLicense = null;
+
+  async function checkLicenseStatus() {
+    try {
+      const res = await fetch('/api/license-status');
+      if (!res.ok) return;
+      currentLicense = await res.json();
+      updateLicenseUI(currentLicense);
+    } catch (e) {
+      console.warn('License check error:', e);
+    }
+  }
+
+  function updateLicenseUI(lic) {
+    if (!lic) return;
+
+    if (lic.isUnlocked) {
+      // FULL UNLOCKED MODE
+      if (trialBadgeBtn) {
+        trialBadgeBtn.className = 'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition';
+        trialBadgeBtn.title = 'सॉफ्टवेअर पूर्णपणे अनलॉक आहे';
+      }
+      if (trialPulseDot) {
+        trialPulseDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+      }
+      if (trialCountdownText) {
+        trialCountdownText.textContent = '✅ पूर्ण व्हर्जन';
+      }
+      if (trialLockIcon) {
+        trialLockIcon.setAttribute('data-lucide', 'shield-check');
+      }
+      if (licenseStatusPill) {
+        licenseStatusPill.className = 'font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        licenseStatusPill.textContent = 'सक्रिय (Full Version Unlocked)';
+      }
+      if (licenseTimeLeftDisplay) {
+        licenseTimeLeftDisplay.textContent = 'कायमस्वरूपी सक्रिय (Lifetime Unlocked)';
+      }
+      if (licenseExpiredNotice) licenseExpiredNotice.classList.add('hidden');
+      if (closeLicenseModalBtn) closeLicenseModalBtn.classList.remove('hidden');
+
+      if (generateBtn) {
+        generateBtn.disabled = false;
+        generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    } else if (lic.isExpired) {
+      // EXPIRED TRIAL / LOCKED MODE
+      if (trialBadgeBtn) {
+        trialBadgeBtn.className = 'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/40 text-xs font-semibold transition';
+        trialBadgeBtn.title = 'डेमो कालावधी संपला आहे! अनलॉक करण्यासाठी क्लिक करा';
+      }
+      if (trialPulseDot) {
+        trialPulseDot.className = 'w-2 h-2 rounded-full bg-rose-500 animate-ping';
+      }
+      if (trialCountdownText) {
+        trialCountdownText.textContent = '🔒 डेमो संपला (Locked)';
+      }
+      if (trialLockIcon) {
+        trialLockIcon.setAttribute('data-lucide', 'lock');
+      }
+      if (licenseStatusPill) {
+        licenseStatusPill.className = 'font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30';
+        licenseStatusPill.textContent = 'मुदत संपली (Expired & Locked)';
+      }
+      if (licenseTimeLeftDisplay) {
+        licenseTimeLeftDisplay.textContent = '० तास शिल्लक (Time Over)';
+      }
+      if (licenseExpiredNotice) licenseExpiredNotice.classList.remove('hidden');
+      if (closeLicenseModalBtn) closeLicenseModalBtn.classList.add('hidden'); // Cannot close modal when expired
+
+      // Force open lock modal
+      if (licenseModal) licenseModal.classList.remove('hidden');
+
+      if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    } else {
+      // ACTIVE TRIAL (UNDER 3 DAYS)
+      const d = lic.daysLeft || 0;
+      const h = lic.hoursLeft || 0;
+      const timeStr = d > 0 ? `${d} दिवस ${h} तास` : `${h} तास शिल्लक`;
+
+      if (trialBadgeBtn) {
+        trialBadgeBtn.className = 'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition';
+        trialBadgeBtn.title = 'डेमो कालावधी शिल्लक: ' + timeStr;
+      }
+      if (trialPulseDot) {
+        trialPulseDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+      }
+      if (trialCountdownText) {
+        trialCountdownText.textContent = `⏳ डेमो: ${timeStr}`;
+      }
+      if (trialLockIcon) {
+        trialLockIcon.setAttribute('data-lucide', 'lock');
+      }
+      if (licenseStatusPill) {
+        licenseStatusPill.className = 'font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        licenseStatusPill.textContent = 'डेमो चालू (Trial Active)';
+      }
+      if (licenseTimeLeftDisplay) {
+        licenseTimeLeftDisplay.textContent = timeStr;
+      }
+      if (licenseExpiredNotice) licenseExpiredNotice.classList.add('hidden');
+      if (closeLicenseModalBtn) closeLicenseModalBtn.classList.remove('hidden');
+
+      if (generateBtn) {
+        generateBtn.disabled = false;
+        generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  // Event Listeners for License System
+  if (trialBadgeBtn && licenseModal) {
+    trialBadgeBtn.addEventListener('click', () => {
+      licenseModal.classList.remove('hidden');
+    });
+  }
+
+  if (closeLicenseModalBtn && licenseModal) {
+    closeLicenseModalBtn.addEventListener('click', () => {
+      if (currentLicense && currentLicense.isExpired && !currentLicense.isUnlocked) {
+        return; // Locked - cannot close
+      }
+      licenseModal.classList.add('hidden');
+    });
+  }
+
+  if (togglePasswordVisibilityBtn && licensePasswordInput) {
+    togglePasswordVisibilityBtn.addEventListener('click', () => {
+      const isPwd = licensePasswordInput.type === 'password';
+      licensePasswordInput.type = isPwd ? 'text' : 'password';
+      togglePasswordVisibilityBtn.textContent = isPwd ? '🙈' : '👁️';
+    });
+  }
+
+  if (licenseUnlockForm) {
+    licenseUnlockForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pwd = (licensePasswordInput ? licensePasswordInput.value : '').trim();
+      if (!pwd) {
+        if (licenseFormMsg) {
+          licenseFormMsg.textContent = 'कृपया पासवर्ड टाका!';
+          licenseFormMsg.className = 'text-[11px] text-rose-400 mt-1.5 block';
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/license-unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          showToast(data.message || 'अनलॉक यशस्वी!', 'success');
+          if (licenseFormMsg) {
+            licenseFormMsg.textContent = data.message;
+            licenseFormMsg.className = 'text-[11px] text-emerald-400 mt-1.5 block';
+          }
+          if (licensePasswordInput) licensePasswordInput.value = '';
+          await checkLicenseStatus();
+          setTimeout(() => {
+            if (licenseModal) licenseModal.classList.add('hidden');
+          }, 1200);
+        } else {
+          const errMsg = data.error || 'चुकीचा पासवर्ड!';
+          showToast(errMsg, 'error');
+          if (licenseFormMsg) {
+            licenseFormMsg.textContent = errMsg;
+            licenseFormMsg.className = 'text-[11px] text-rose-400 mt-1.5 block';
+          }
+        }
+      } catch (err) {
+        showToast('सर्व्हर त्रुटी: ' + err.message, 'error');
+      }
+    });
+  }
+
+  if (instantLockBtn) {
+    instantLockBtn.addEventListener('click', async () => {
+      const pwd = prompt('क्लायंटसाठी ॲप आत्ताच त्वरित लॉक करायचे आहे का?\n\nखात्री करण्यासाठी ॲडमिन पासवर्ड टाका (उदा. MAHA@2026):');
+      if (!pwd) return;
+
+      try {
+        const res = await fetch('/api/license-lock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwd.trim() })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast('ॲप त्वरित लॉक केले गेले आहे!', 'warning');
+          await checkLicenseStatus();
+        } else {
+          alert(data.error || 'चुकीचा पासवर्ड!');
+        }
+      } catch (err) {
+        alert('त्रुटी: ' + err.message);
+      }
+    });
+  }
+
+  // Check license on boot and every 60 seconds
+  checkLicenseStatus();
+  setInterval(checkLicenseStatus, 60000);
 
   // Load history on boot
   loadHistory();

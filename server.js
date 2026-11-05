@@ -13,25 +13,6 @@ const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const OUTPUTS_DIR = path.join(__dirname, 'outputs');
 
-// ============================================================
-// DEMO LOCK & SECURITY CONTROLS
-// 1. Password Protection (Default: "chitra2026")
-// 2. 3-Day Automatic Expiry Lock (Starts from Oct 29, 2026)
-// ============================================================
-const DEMO_CONFIG = {
-  // If true, user must enter DEMO_PASSWORD to access
-  passwordProtected: true,
-  demoPassword: process.env.DEMO_PASSWORD || 'chitra2026',
-
-  // 3-Day Automatic Expiry (3 days from Oct 29, 2026 = Nov 1, 2026 23:59:59 IST)
-  // After this timestamp, demo automatically locks even with password
-  expiryEnabled: true,
-  expiryTimestamp: new Date('2026-11-01T23:59:59+05:30').getTime(),
-
-  // Emergency Master killswitch (Set true or environment variable APP_LOCKED=true)
-  killswitch: process.env.APP_LOCKED === 'true'
-};
-
 // Ensure outputs directory exists
 if (!fs.existsSync(OUTPUTS_DIR)) {
   fs.mkdirSync(OUTPUTS_DIR, { recursive: true });
@@ -721,6 +702,48 @@ async function generateSafeImage(prompt, options = {}) {
   return { buffer: Buffer.from(svg), provider: 'ChitraSrushti Engine' };
 }
 
+// ================= LICENSE & DEMO TRIAL LOCK SYSTEM =================
+const LICENSE_FILE = path.join(__dirname, 'license.json');
+const TRIAL_DURATION_MS = 3 * 24 * 60 * 60 * 1000; // 3 Days (72 Hours)
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'MAHA@2026';
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'DEMO@2026';
+
+function getLicenseData() {
+  try {
+    if (fs.existsSync(LICENSE_FILE)) {
+      const content = fs.readFileSync(LICENSE_FILE, 'utf-8');
+      const data = JSON.parse(content);
+      if (data && data.createdAt) {
+        return data;
+      }
+    }
+  } catch (e) {}
+
+  const now = Date.now();
+  const initial = {
+    createdAt: now,
+    expiresAt: now + TRIAL_DURATION_MS,
+    isUnlocked: false,
+    unlockedAt: null
+  };
+  try {
+    fs.writeFileSync(LICENSE_FILE, JSON.stringify(initial, null, 2), 'utf-8');
+  } catch (e) {}
+  return initial;
+}
+
+function saveLicenseData(data) {
+  try {
+    fs.writeFileSync(LICENSE_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {}
+}
+
+function isLicenseValid() {
+  const lic = getLicenseData();
+  if (lic.isUnlocked) return true;
+  return Date.now() < lic.expiresAt;
+}
+
 // Main HTTP request handler
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -736,59 +759,96 @@ const server = http.createServer(async (req, res) => {
     return res.end();
   }
 
-  // ================= DEMO LOCK STATUS API =================
-  if (pathname === '/api/demo-status' && method === 'GET') {
+  // ================= LICENSE / TRIAL API ENDPOINTS =================
+  if (pathname === '/api/license-status' && method === 'GET') {
+    const lic = getLicenseData();
     const now = Date.now();
-    const isExpired = DEMO_CONFIG.expiryEnabled && now > DEMO_CONFIG.expiryTimestamp;
-    const isLocked = DEMO_CONFIG.killswitch || isExpired;
+    const isUnlocked = !!lic.isUnlocked;
+    const isExpired = !isUnlocked && now >= lic.expiresAt;
+    const timeLeftMs = Math.max(0, lic.expiresAt - now);
+    const hoursLeft = Math.floor(timeLeftMs / (60 * 60 * 1000));
+    const daysLeft = Math.floor(hoursLeft / 24);
+
     return sendJSON(res, 200, {
-      locked: isLocked,
-      expired: isExpired,
-      passwordRequired: DEMO_CONFIG.passwordProtected,
-      expiryDate: new Date(DEMO_CONFIG.expiryTimestamp).toISOString(),
-      daysLeft: Math.max(0, Math.ceil((DEMO_CONFIG.expiryTimestamp - now) / (1000 * 60 * 60 * 24)))
+      isUnlocked,
+      isExpired,
+      createdAt: lic.createdAt,
+      expiresAt: lic.expiresAt,
+      now,
+      timeLeftMs,
+      daysLeft,
+      hoursLeft: hoursLeft % 24,
+      totalHoursLeft: hoursLeft
     });
   }
 
-  // ================= DEMO VERIFY PASSWORD API =================
-  if (pathname === '/api/verify-password' && method === 'POST') {
+  if (pathname === '/api/license-unlock' && method === 'POST') {
     try {
       const body = await parseBody(req);
-      const inputPass = (body.password || '').trim();
-      const now = Date.now();
-      const isExpired = DEMO_CONFIG.expiryEnabled && now > DEMO_CONFIG.expiryTimestamp;
+      const password = (body.password || '').trim();
 
-      if (DEMO_CONFIG.killswitch || isExpired) {
-        return sendJSON(res, 403, {
-          success: false,
-          error: 'डेमो कालावधी समाप्त झाला आहे. कृपया ॲक्सेससाठी विकासकाशी (Developer) संपर्क साधा.'
-        });
+      if (!password) {
+        return sendJSON(res, 400, { error: 'पासवर्ड आवश्यक आहे (Password is required)' });
       }
 
-      if (inputPass === DEMO_CONFIG.demoPassword) {
-        return sendJSON(res, 200, { success: true, message: 'प्रवेश यशस्वी!' });
+      if (password === ADMIN_PASSWORD) {
+        const lic = getLicenseData();
+        lic.isUnlocked = true;
+        lic.unlockedAt = Date.now();
+        saveLicenseData(lic);
+        return sendJSON(res, 200, {
+          success: true,
+          isUnlocked: true,
+          message: 'सॉफ्टवेअर यशस्वीरित्या कायमस्वरूपी अनलॉक झाले! (Full Version Unlocked)'
+        });
+      } else if (password === DEMO_PASSWORD) {
+        const lic = getLicenseData();
+        lic.expiresAt = Math.max(Date.now(), lic.expiresAt) + TRIAL_DURATION_MS;
+        lic.isUnlocked = false;
+        saveLicenseData(lic);
+        return sendJSON(res, 200, {
+          success: true,
+          isTrialExtended: true,
+          expiresAt: lic.expiresAt,
+          message: 'डेमो कालावधी ३ दिवसांसाठी वाढवला आहे! (Demo extended by 3 days)'
+        });
       } else {
-        return sendJSON(res, 401, { success: false, error: 'चुकीचा पासवर्ड! कृपया योग्य पासवर्ड टाका.' });
+        return sendJSON(res, 401, { error: 'चुकीचा पासवर्ड! कृपया योग्य ॲडमिन पासवर्ड टाका.' });
       }
     } catch (err) {
-      return sendJSON(res, 500, { success: false, error: err.message });
+      return sendJSON(res, 500, { error: err.message });
     }
   }
 
-  // Check demo expiry before generating
-  if ((pathname === '/api/generate' || pathname === '/api/translate') && method === 'POST') {
-    const now = Date.now();
-    const isExpired = DEMO_CONFIG.expiryEnabled && now > DEMO_CONFIG.expiryTimestamp;
-    if (DEMO_CONFIG.killswitch || isExpired) {
-      return sendJSON(res, 403, {
-        error: 'डेमो कालावधी संपला आहे (Demo Period Expired). ॲप अनलॉक करण्यासाठी पेमेंट पूर्ण करा.'
-      });
+  if (pathname === '/api/license-lock' && method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const password = (body.password || '').trim();
+
+      if (password !== ADMIN_PASSWORD) {
+        return sendJSON(res, 401, { error: 'अनधिकृत! योग्य ॲडमिन पासवर्ड आवश्यक आहे.' });
+      }
+
+      const lic = getLicenseData();
+      lic.isUnlocked = false;
+      lic.expiresAt = Date.now() - 1000; // Immediate expiry lock
+      saveLicenseData(lic);
+      return sendJSON(res, 200, { success: true, message: 'ॲप त्वरित लॉक केले गेले आहे!' });
+    } catch (err) {
+      return sendJSON(res, 500, { error: err.message });
     }
   }
 
   // 1. Translation Endpoint
   if (pathname === '/api/translate' && method === 'POST') {
     try {
+      if (!isLicenseValid()) {
+        return sendJSON(res, 403, {
+          error: 'डेमो कालावधी संपला आहे! कृपया ॲडमिन पासवर्ड टाका किंवा सॉफ्टवेअर मालकाशी संपर्क साधा.',
+          locked: true
+        });
+      }
+
       const body = await parseBody(req);
       const text = (body.text || '').trim();
       const style = body.style || 'photorealistic';
@@ -831,6 +891,13 @@ const server = http.createServer(async (req, res) => {
   // 3. Image Generation Endpoint
   if (pathname === '/api/generate' && method === 'POST') {
     try {
+      if (!isLicenseValid()) {
+        return sendJSON(res, 403, {
+          error: 'डेमो कालावधी संपला आहे! कृपया ॲडमिन पासवर्ड टाका किंवा सॉफ्टवेअर मालकाशी संपर्क साधा.',
+          locked: true
+        });
+      }
+
       const body = await parseBody(req);
       const marathiPrompt = (body.marathiPrompt || '').trim();
       let prompt = (body.prompt || '').trim();
