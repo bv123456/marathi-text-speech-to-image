@@ -874,14 +874,18 @@
       <!-- Password Input Form -->
       <form id="licenseUnlockForm" class="space-y-3.5">
         <div>
-          <label for="licensePasswordInput" class="block text-xs font-semibold text-slate-300 mb-1.5">
-            ॲडमिन अनलॉक पासवर्ड (Password):
+                    <label for="licensePasswordInput" class="block text-xs font-semibold text-slate-300 mb-1.5">
+            ॲडमिन / डेमो अनलॉक पासवर्ड (Password):
           </label>
           <div class="relative">
-            <input type="password" id="licensePasswordInput" placeholder="पासवर्ड टाका (उदा. MAHA@2026)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-sm text-white placeholder-slate-500 outline-none pr-10">
+            <input type="password" id="licensePasswordInput" placeholder="पासवर्ड टाका (उदा. MAHA@2026 किंवा DEMO@2026)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-sm text-white placeholder-slate-500 outline-none pr-10">
             <button type="button" id="togglePasswordVisibilityBtn" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 text-sm">👁️</button>
           </div>
           <p id="licenseFormMsg" class="text-[11px] text-slate-400 mt-1.5 hidden"></p>
+          <div class="mt-2 text-[11px] text-slate-400 space-y-0.5">
+            <p>• <strong>मास्टर पासवर्ड (<code class="text-orange-400">MAHA@2026</code>):</strong> कायमस्वरूपी पूर्ण अनलॉक</p>
+            <p>• <strong>डेमो पासवर्ड (<code class="text-amber-400">DEMO@2026</code>):</strong> ३ दिवसांसाठी डेमो वाढवणे</p>
+          </div>
         </div>
 
         <div class="flex items-center gap-2 pt-1">

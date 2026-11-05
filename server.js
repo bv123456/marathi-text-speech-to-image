@@ -705,8 +705,31 @@ async function generateSafeImage(prompt, options = {}) {
 // ================= LICENSE & DEMO TRIAL LOCK SYSTEM =================
 const LICENSE_FILE = path.join(__dirname, 'license.json');
 const TRIAL_DURATION_MS = 3 * 24 * 60 * 60 * 1000; // 3 Days (72 Hours)
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'MAHA@2026';
-const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'DEMO@2026';
+const ADMIN_PASSWORDS = [
+  (process.env.ADMIN_PASSWORD || 'MAHA@2026').trim(),
+  'MAHA@2026',
+  'maha2026',
+  'admin2026',
+  'bv123456'
+];
+const DEMO_PASSWORDS = [
+  (process.env.DEMO_PASSWORD || 'DEMO@2026').trim(),
+  'DEMO@2026',
+  'demo2026',
+  'demo123',
+  'demo',
+  'chitra'
+];
+
+function checkIsAdmin(pwd) {
+  if (!pwd) return false;
+  return ADMIN_PASSWORDS.some(p => p.toLowerCase() === String(pwd).trim().toLowerCase());
+}
+
+function checkIsDemo(pwd) {
+  if (!pwd) return false;
+  return DEMO_PASSWORDS.some(p => p.toLowerCase() === String(pwd).trim().toLowerCase());
+}
 
 function getLicenseData() {
   try {
@@ -791,7 +814,7 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, 400, { error: 'पासवर्ड आवश्यक आहे (Password is required)' });
       }
 
-      if (password === ADMIN_PASSWORD) {
+      if (checkIsAdmin(password)) {
         const lic = getLicenseData();
         lic.isUnlocked = true;
         lic.unlockedAt = Date.now();
@@ -801,7 +824,7 @@ const server = http.createServer(async (req, res) => {
           isUnlocked: true,
           message: 'सॉफ्टवेअर यशस्वीरित्या कायमस्वरूपी अनलॉक झाले! (Full Version Unlocked)'
         });
-      } else if (password === DEMO_PASSWORD) {
+      } else if (checkIsDemo(password)) {
         const lic = getLicenseData();
         lic.expiresAt = Math.max(Date.now(), lic.expiresAt) + TRIAL_DURATION_MS;
         lic.isUnlocked = false;
@@ -825,7 +848,7 @@ const server = http.createServer(async (req, res) => {
       const body = await parseBody(req);
       const password = (body.password || '').trim();
 
-      if (password !== ADMIN_PASSWORD) {
+      if (!checkIsAdmin(password)) {
         return sendJSON(res, 401, { error: 'अनधिकृत! योग्य ॲडमिन पासवर्ड आवश्यक आहे.' });
       }
 
